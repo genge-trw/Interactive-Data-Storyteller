@@ -255,8 +255,12 @@ button:active {
 
     .chart-controls select, .chart-controls button {
         width: 100%;
-        margin-left: 0;
-        margin-bottom: 10px;
+        margin-left: 0; /* Remove left margin */
+        margin-bottom: 10px; /* Add space between stacked controls */
+    }
+
+    .chart-controls button {
+        margin-top: 5px; /* Add a little more space above buttons when stacked */
     }
 }
 
@@ -281,3 +285,154 @@ button:active {
         height: 150px;
     }
 }
+
+/* Styles for custom file input button */
+.file-input-wrapper {
+    position: relative;
+    display: inline-block;
+    overflow: hidden;
+    margin-bottom: 15px;
+}
+
+.file-input-wrapper .hidden-file-input {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+    font-size: 0; /* Hide text content */
+    line-height: 0; /* Hide text content */
+    z-index: -1; /* Place behind the label */
+}
+
+/* General button styles (if not already defined) */
+.button {
+    display: inline-block;
+    padding: 12px 24px; /* Adjusted to match existing button padding */
+    border-radius: 6px; /* Adjusted to match existing button border-radius */
+    cursor: pointer;
+    font-size: 1em;
+    text-align: center;
+    text-decoration: none;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease; /* Adjusted to match existing button transition */
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Adjusted to match existing button box-shadow */
+}
+
+.button.secondary-btn {
+    background-color: var(--secondary-color); /* Changed to use --secondary-color */
+    color: white;
+}
+
+.button.secondary-btn:hover {
+    background-color: #2e8b4a; /* A slightly darker green */
+}
+
+/* Button Group Styling */
+.button-group {
+    display: flex;
+    gap: 10px; /* Space between buttons */
+    margin-top: 15px; /* Space above the button group */
+    flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
+}
+
+.button-group button {
+    flex: 1; /* Distribute space evenly among buttons */
+    min-width: 150px; /* Ensure buttons don't get too small */
+}
+
+/* Adjustments for smaller screens */
+@media (max-width: 768px) {
+    .button-group {
+        flex-direction: column; /* Stack buttons vertically on small screens */
+    }
+
+    .button-group button {
+        width: 100%; /* Full width for stacked buttons */
+        margin-right: 0; /* Remove right margin when stacked */
+    }
+}
+
+/* Chart Controls Layout Improvements */
+.chart-controls label {
+    flex-basis: auto; /* Allow labels to take natural width */
+    margin-right: 5px; /* Small space between label and select */
+}
+
+.chart-controls select {
+    flex-grow: 1; /* Allow selects to grow and fill space */
+    max-width: 200px; /* Limit max width for selects */
+}
+
+.chart-controls button {
+    flex-shrink: 0; /* Prevent buttons from shrinking */
+    margin-left: auto; /* Push buttons to the right if space allows */
+}
+
+/* Responsive adjustments for chart controls */
+@media (max-width: 768px) {
+    .chart-controls {
+        flex-direction: column; /* Stack controls vertically on small screens */
+        align-items: stretch; /* Stretch items to full width */
+    }
+
+    .chart-controls label,
+    .chart-controls select,
+    .chart-controls button {
+        width: 100%; /* Full width for stacked controls */
+        margin-left: 0; /* Remove left margin */
+        margin-bottom: 10px; /* Add space between stacked controls */
+    }
+
+    .chart-controls button {
+        margin-top: 5px; /* Add a little more space above buttons when stacked */
+    }
+}
+
+/* Basic Tooltip Styling for title attributes */
+[title]:hover::after {
+    content: attr(title);
+    position: absolute;
+    background-color: var(--text-color);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    white-space: nowrap;
+    z-index: 10;
+    bottom: 100%; /* Position above the element */
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 5px;
+    pointer-events: none; /* Allow interaction with element below */
+}
+
+/* Hide original title attribute on hover to prevent double tooltips */
+[title]:hover::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: var(--text-color);
+    z-index: 10;
+    pointer-events: none;
+}
+
+/* Icon Placeholder Styling for Narrative Buttons */
+.output-section button i {
+    margin-right: 8px; /* Space between icon and text */
+    display: inline-block;
+    width: 1em; /* Standard width for an icon */
+    text-align: center;
+}
+
+/* Optional: Basic visual for placeholder icons if no library is used */
+.output-section button .icon-rewrite::before { content: '↻'; } /* Unicode for a refresh/rewrite icon */
+.output-section button .icon-copy::before { content: '📋'; } /* Unicode for a clipboard/copy icon */
+.output-section button .icon-download::before { content: '⬇'; } /* Unicode for a download icon */

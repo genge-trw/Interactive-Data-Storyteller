@@ -4,21 +4,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Interactive Data Storyteller</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=1">
+    <!-- Add libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
     <a href="#main-content" class="skip-link">Skip to main content</a>
     <div class="container" id="main-content">
-        <h1>Interactive Data Storyteller</h1>
+        <h1>Interactive Data Storyteller <button id="helpBtn" class="secondary-btn" style="font-size: 0.6em; padding: 5px 10px; margin-left: 10px;">Help / Tutorial</button></h1>
 
         <section class="input-section">
             <h2>1. Input Your Data</h2>
             <label for="dataInput" class="sr-only">Paste your data here</label>
             <textarea id="dataInput" placeholder="Paste your data here (e.g., CSV, plain text)..."></textarea>
-            <label for="fileInput" class="sr-only">Upload data file</label>
-            <input type="file" id="fileInput" accept=".csv,.txt" style="margin-bottom: 15px;">
+            <div class="file-input-wrapper">
+                <input type="file" id="fileInput" accept=".csv,.txt" class="hidden-file-input">
+                <label for="fileInput" class="button secondary-btn">Upload Data File</label>
+            </div>
 
-            <label for="predefinedGoal" class="sr-only">Choose a predefined storytelling goal</label>
+            <label for="predefinedGoal">Choose a predefined storytelling goal:</label>
             <select id="predefinedGoal" style="margin-bottom: 15px;">
                 <option value="">-- Or choose a predefined goal --</option>
                 <option value="Explain growth trends">Explain growth trends</option>
@@ -27,58 +36,90 @@
                 <option value="Compare categories">Compare categories</option>
             </select>
 
-            <button id="processDataBtn" aria-label="Process Data">Process Data</button>
-            <button id="clearAllBtn" class="secondary-btn" aria-label="Clear All Inputs and Outputs">Clear All</button>
+            <div class="button-group">
+                <button id="processDataBtn" aria-label="Process Data">Process Data</button>
+                <button id="clearAllBtn" class="secondary-btn" aria-label="Clear All Inputs and Outputs">Clear All</button>
+            </div>
         </section>
 
         <section class="data-preview-section" style="display:none;">
             <h2>Data Preview</h2>
             <div id="dataPreviewTable" role="region" aria-live="polite" aria-atomic="true"></div>
             <div class="chart-controls" style="margin-top: 20px;">
+                <label for="chartTitleInput">Chart Title:</label>
+                <input type="text" id="chartTitleInput" placeholder="Enter chart title" style="margin-right: 15px;">
+                <label for="chartColorInput">Chart Color:</label>
+                <input type="color" id="chartColorInput" value="#4285F4" style="margin-right: 15px;">
+                <input type="checkbox" id="chartLegendToggle" checked style="margin-left: 15px;">
+                <label for="chartLegendToggle">Show Legend</label>
                 <label for="chartTypeSelect">Chart Type:</label>
                 <select id="chartTypeSelect">
                     <option value="bar">Bar Chart</option>
                     <option value="line">Line Chart</option>
+                    <option value="pie">Pie Chart</option>
                 </select>
                 <label for="chartCategorySelect">Category:</label>
                 <select id="chartCategorySelect"></select>
                 <label for="chartValueSelect" style="margin-left: 15px;">Value:</label>
                 <select id="chartValueSelect"></select>
                 <button id="renderChartBtn" style="margin-left: 15px;">Update Chart</button>
+                <button id="downloadChartBtn" class="secondary-btn">Download Chart</button>
+                <button id="downloadProcessedDataBtn" class="secondary-btn">Download Processed Data (CSV)</button>
             </div>
-            <div id="dataChart" class="data-chart" role="img" aria-label="Data visualization chart"></div>
+            <div id="chartContainer" class="data-chart-container">
+                <canvas id="dataChart" class="data-chart" role="img" aria-label="Data visualization chart"></canvas>
+                <p id="chartPlaceholder" class="chart-placeholder">Select data and chart type to visualize.</p>
+            </div>
         </section>
 
         <section class="output-section">
             <h2>2. AI Insights & Storytelling</h2>
             <div id="summaryOutput" class="output-box" role="region" aria-live="polite" aria-atomic="true">
-                <h3>Data Summary: <span class="loading-indicator" style="display:none;"> (Loading...)</span></h3>
+                <h3>Data Summary: <span class="loading-indicator" style="display:none;"> (Summarizing data...)</span></h3>
                 <p><em>Summary will appear here after processing.</em></p>
             </div>
 
             <div id="promptOutput" class="output-box" role="region" aria-live="polite" aria-atomic="true">
-                <h3>AI Prompts: <span class="loading-indicator" style="display:none;"> (Thinking...)</span></h3>
-                <p><em>AI will ask questions to guide your story.</em></p>
+                <h3>AI Prompts: <span class="loading-indicator" style="display:none;"> (AI is thinking...)</span></h3>
+                <div id="aiChatHistory" style="margin-bottom: 15px; border: 1px solid var(--border-color); padding: 10px; border-radius: 6px; min-height: 100px; overflow-y: auto;"></div>
                 <label for="userResponse" class="sr-only">Your response to AI prompts</label>
                 <textarea id="userResponse" placeholder="Your response..." aria-label="Your response to AI prompts"></textarea>
                 <button id="sendResponseBtn" aria-label="Send Response to AI">Send Response</button>
+                <label for="freeformPromptInput" class="sr-only">Free-form AI Prompt</label>
+                <textarea id="freeformPromptInput" placeholder="Ask AI anything about your data..." aria-label="Free-form AI Prompt" style="margin-top: 10px;"></textarea>
+                <button id="sendFreeformPromptBtn" aria-label="Send Free-form Prompt to AI" style="margin-top: 5px;">Ask AI</button>
             </div>
 
             <div id="narrativeOutput" class="output-box" role="region" aria-live="polite" aria-atomic="true">
-                <h3>Generated Narrative: <span class="loading-indicator" style="display:none;"> (Generating...)</span></h3>
+                <h3>Generated Narrative: <span class="loading-indicator" style="display:none;"> (Generating narrative...)</span></h3>
                 <p><em>Your data story will be generated here.</em></p>
-                <button id="rewriteNarrativeBtn" aria-label="Rewrite Narrative">Rewrite Narrative</button>
-                <button id="copyNarrativeBtn" aria-label="Copy Narrative to Clipboard">Copy Narrative</button>
-                <button id="downloadNarrativeBtn" aria-label="Download Narrative as Text File">Download Narrative</button>
-        </div>
+                <button id="rewriteNarrativeBtn" aria-label="Rewrite Narrative"><i class="icon-rewrite"></i> <span>Rewrite Narrative</span></button>
+                <button id="copyNarrativeBtn" aria-label="Copy Narrative to Clipboard"><i class="icon-copy"></i> <span>Copy Narrative</span></button>
+                <button id="downloadNarrativeBtn" aria-label="Download Narrative as Text File"><i class="icon-download"></i> <span>Download Narrative</span></button>
+            </div>
 
-        <section class="saved-narratives-section">
-            <h2>3. Saved Narratives</h2>
-            <div id="savedNarrativesList"></div>
-        </section>
+            <section class="saved-narratives-section">
+                <h2>3. Saved Narratives</h2>
+                <div id="savedNarrativesList"></div>
+            </section>
         </section>
     </div>
 
     <script src="script.js"></script>
+
+    <!-- Tutorial Modal -->
+    <div id="tutorialModal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Application Tutorial</h2>
+            <div id="tutorialContent">
+                <!-- Tutorial steps will be dynamically loaded here -->
+            </div>
+            <div class="tutorial-navigation">
+                <button id="prevTutorialBtn" class="secondary-btn">Previous</button>
+                <button id="nextTutorialBtn">Next</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

@@ -7,121 +7,333 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=1">
+    <link rel="stylesheet" href="style.css?v=2">
     <!-- Add libraries -->
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.10/dayjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-dayjs-4/dist/chartjs-adapter-dayjs-4.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
 </head>
 <body>
     <a href="#main-content" class="skip-link">Skip to main content</a>
-    <div class="container" id="main-content">
-        <h1>Interactive Data Storyteller <button id="helpBtn" class="secondary-btn" style="font-size: 0.6em; padding: 5px 10px; margin-left: 10px;">Help / Tutorial</button></h1>
 
-        <section class="input-section">
-            <h2>1. Input Your Data</h2>
-            <label for="dataInput" class="sr-only">Paste your data here</label>
-            <textarea id="dataInput" placeholder="Paste your data here (e.g., CSV, plain text)..."></textarea>
-            <div class="file-input-wrapper">
-                <input type="file" id="fileInput" accept=".csv,.txt" class="hidden-file-input">
-                <label for="fileInput" class="button secondary-btn">Upload Data File</label>
-            </div>
-
-            <label for="predefinedGoal">Choose a predefined storytelling goal:</label>
-            <select id="predefinedGoal" style="margin-bottom: 15px;">
-                <option value="">-- Or choose a predefined goal --</option>
-                <option value="Explain growth trends">Explain growth trends</option>
-                <option value="Highlight anomalies">Highlight anomalies</option>
-                <option value="Summarize key findings">Summarize key findings</option>
-                <option value="Compare categories">Compare categories</option>
-            </select>
-
-            <div class="button-group">
-                <button id="processDataBtn" aria-label="Process Data">Process Data</button>
-                <button id="clearAllBtn" class="secondary-btn" aria-label="Clear All Inputs and Outputs">Clear All</button>
-            </div>
-        </section>
-
-        <section class="data-preview-section" style="display:none;">
-            <h2>Data Preview</h2>
-            <div id="dataPreviewTable" role="region" aria-live="polite" aria-atomic="true"></div>
-            <div class="chart-controls" style="margin-top: 20px;">
-                <label for="chartTitleInput">Chart Title:</label>
-                <input type="text" id="chartTitleInput" placeholder="Enter chart title" style="margin-right: 15px;">
-                <label for="chartColorInput">Chart Color:</label>
-                <input type="color" id="chartColorInput" value="#4285F4" style="margin-right: 15px;">
-                <input type="checkbox" id="chartLegendToggle" checked style="margin-left: 15px;">
-                <label for="chartLegendToggle">Show Legend</label>
-                <label for="chartTypeSelect">Chart Type:</label>
-                <select id="chartTypeSelect">
-                    <option value="bar">Bar Chart</option>
-                    <option value="line">Line Chart</option>
-                    <option value="pie">Pie Chart</option>
-                </select>
-                <label for="chartCategorySelect">Category:</label>
-                <select id="chartCategorySelect"></select>
-                <label for="chartValueSelect" style="margin-left: 15px;">Value:</label>
-                <select id="chartValueSelect"></select>
-                <button id="renderChartBtn" style="margin-left: 15px;">Update Chart</button>
-                <button id="downloadChartBtn" class="secondary-btn">Download Chart</button>
-                <button id="downloadProcessedDataBtn" class="secondary-btn">Download Processed Data (CSV)</button>
-            </div>
-            <div id="chartContainer" class="data-chart-container">
-                <canvas id="dataChart" class="data-chart" role="img" aria-label="Data visualization chart"></canvas>
-                <p id="chartPlaceholder" class="chart-placeholder">Select data and chart type to visualize.</p>
-            </div>
-        </section>
-
-        <section class="output-section">
-            <h2>2. AI Insights & Storytelling</h2>
-            <div id="summaryOutput" class="output-box" role="region" aria-live="polite" aria-atomic="true">
-                <h3>Data Summary: <span class="loading-indicator" style="display:none;"> (Summarizing data...)</span></h3>
-                <p><em>Summary will appear here after processing.</em></p>
-            </div>
-
-            <div id="promptOutput" class="output-box" role="region" aria-live="polite" aria-atomic="true">
-                <h3>AI Prompts: <span class="loading-indicator" style="display:none;"> (AI is thinking...)</span></h3>
-                <div id="aiChatHistory" style="margin-bottom: 15px; border: 1px solid var(--border-color); padding: 10px; border-radius: 6px; min-height: 100px; overflow-y: auto;"></div>
-                <label for="userResponse" class="sr-only">Your response to AI prompts</label>
-                <textarea id="userResponse" placeholder="Your response..." aria-label="Your response to AI prompts"></textarea>
-                <button id="sendResponseBtn" aria-label="Send Response to AI">Send Response</button>
-                <label for="freeformPromptInput" class="sr-only">Free-form AI Prompt</label>
-                <textarea id="freeformPromptInput" placeholder="Ask AI anything about your data..." aria-label="Free-form AI Prompt" style="margin-top: 10px;"></textarea>
-                <button id="sendFreeformPromptBtn" aria-label="Send Free-form Prompt to AI" style="margin-top: 5px;">Ask AI</button>
-            </div>
-
-            <div id="narrativeOutput" class="output-box" role="region" aria-live="polite" aria-atomic="true">
-                <h3>Generated Narrative: <span class="loading-indicator" style="display:none;"> (Generating narrative...)</span></h3>
-                <p><em>Your data story will be generated here.</em></p>
-                <button id="rewriteNarrativeBtn" aria-label="Rewrite Narrative"><i class="icon-rewrite"></i> <span>Rewrite Narrative</span></button>
-                <button id="copyNarrativeBtn" aria-label="Copy Narrative to Clipboard"><i class="icon-copy"></i> <span>Copy Narrative</span></button>
-                <button id="downloadNarrativeBtn" aria-label="Download Narrative as Text File"><i class="icon-download"></i> <span>Download Narrative</span></button>
-            </div>
-
-            <section class="saved-narratives-section">
-                <h2>3. Saved Narratives</h2>
-                <div id="savedNarrativesList"></div>
-            </section>
-        </section>
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="spinner"></div>
+        <p>Loading...</p>
     </div>
 
-    <script src="script.js?v=5"></script>
+    <div id="notificationContainer"></div>
 
-    <!-- Tutorial Modal -->
-    <div id="tutorialModal" class="modal" style="display:none;">
-        <div class="modal-content">
-            <span class="close-button">&times;</span>
-            <h2>Application Tutorial</h2>
-            <div id="tutorialContent">
-                <!-- Tutorial steps will be dynamically loaded here -->
+    <header class="main-header">
+        <div class="logo">
+            <h1>Interactive Data Storyteller</h1>
+        </div>
+        <div class="header-controls">
+            <div id="apiStatus" class="api-status">
+                <span class="status-indicator status-disconnected"></span>
+                <span class="status-text">API Not Connected</span>
             </div>
-            <div class="tutorial-navigation">
-                <button id="prevTutorialBtn" class="secondary-btn">Previous</button>
-                <button id="nextTutorialBtn">Next</button>
+            <select id="themeSelect">
+                <option value="light">Light Theme</option>
+                <option value="dark">Dark Theme</option>
+                <option value="blue">Blue Theme</option>
+                <option value="green">Green Theme</option>
+            </select>
+            <button id="settingsBtn" class="icon-btn" title="Settings">⚙️</button>
+            <button id="helpBtn" class="icon-btn" title="Help">❓</button>
+        </div>
+    </header>
+
+    <main class="container" id="main-content">
+        <div class="grid-container">
+            <!-- Data Input Section -->
+            <section class="grid-item card data-input-section">
+                <div class="card-header">
+                    <h2>1. Data Input</h2>
+                </div>
+                <div class="card-content">
+                    <div id="dropZone" class="drop-zone">
+                        <p>Drag & drop a file here, or click to upload</p>
+                        <input type="file" id="fileInput" accept=".csv,.txt,.xlsx,.xls" class="hidden-file-input">
+                    </div>
+                    <textarea id="dataTextarea" placeholder="Or paste your raw data here..."></textarea>
+                    <div class="input-options">
+                        <div class="form-group">
+                            <label for="delimiterSelect">Delimiter:</label>
+                            <select id="delimiterSelect">
+                                <option value="auto">Auto-detect</option>
+                                <option value=",">Comma (,)</option>
+                                <option value=";">Semicolon (;)</option>
+                                <option value="	">Tab (	)</option>
+                                <option value="|">Pipe (|)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <input type="checkbox" id="hasHeadersCheckbox" checked>
+                            <label for="hasHeadersCheckbox">Data has headers</label>
+                        </div>
+                        <div class="form-group">
+                            <input type="checkbox" id="autoProcessCheckbox">
+                            <label for="autoProcessCheckbox">Auto-process</label>
+                        </div>
+                    </div>
+                    <div class="button-group">
+                        <button id="processDataBtn" class="primary-btn">Process Data</button>
+                        <button id="clearAllBtn" class="secondary-btn">Clear All</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Data Preview Section -->
+            <section class="grid-item card data-preview-section">
+                <div class="card-header">
+                    <h2>2. Data Preview & Quality</h2>
+                </div>
+                <div class="card-content">
+                    <div class="data-overview">
+                        <p><strong>Rows:</strong> <span id="rowCount">0</span></p>
+                        <p><strong>Columns:</strong> <span id="columnCount">0</span></p>
+                        <p><strong>Numeric Columns:</strong> <span id="numericColumns">0</span></p>
+                        <p><strong>Missing Values:</strong> <span id="missingValues">0</span></p>
+                    </div>
+                    <div id="dataQuality" class="data-quality" style="display: none;">
+                        <h4>Data Quality Report:</h4>
+                        <div id="qualityIndicators"></div>
+                    </div>
+                    <div class="table-container">
+                        <p id="noDataMessage">No data loaded yet.</p>
+                        <table id="dataPreviewTable" class="data-table" style="display: none;">
+                            <thead id="tableHead"></thead>
+                            <tbody id="tableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Charting Section -->
+            <section class="grid-item card charting-section">
+                <div class="card-header">
+                    <h2>3. Visualization</h2>
+                    <button id="exportChartBtn" class="icon-btn" title="Export Chart">🖼️</button>
+                </div>
+                <div class="card-content">
+                    <div class="chart-controls">
+                        <div class="form-group">
+                            <label for="chartTypeSelect">Chart Type:</label>
+                            <select id="chartTypeSelect">
+                                <option value="bar">Bar</option>
+                                <option value="line">Line</option>
+                                <option value="pie">Pie</option>
+                                <option value="scatter">Scatter</option>
+                                <option value="heatmap">Heatmap</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="xAxisSelect">X-Axis:</label>
+                            <select id="xAxisSelect"></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="yAxisSelect">Y-Axis:</label>
+                            <select id="yAxisSelect"></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="chartTitleInput">Chart Title:</label>
+                            <input type="text" id="chartTitleInput" placeholder="Enter chart title">
+                        </div>
+                        <div class="form-group">
+                            <label for="colorSchemeSelect">Color Scheme:</label>
+                            <select id="colorSchemeSelect">
+                                <option value="default">Default</option>
+                                <option value="viridis">Viridis</option>
+                                <option value="spectral">Spectral</option>
+                                <option value="coolwarm">Coolwarm</option>
+                            </select>
+                        </div>
+                        <button id="updateChartBtn" class="primary-btn">Update Chart</button>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="mainChart"></canvas>
+                        <div id="heatmapContainer"></div>
+                        <p id="chartPlaceholder">Select data and chart type to visualize.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- AI Analysis Section -->
+            <section class="grid-item card ai-analysis-section">
+                <div class="card-header">
+                    <h2>4. AI Analysis & Storytelling</h2>
+                </div>
+                <div class="card-content">
+                    <div class="ai-controls">
+                        <div class="form-group">
+                            <label for="analysisTypeSelect">Analysis Type:</label>
+                            <select id="analysisTypeSelect">
+                                <option value="summary">Data Summary</option>
+                                <option value="trends">Trend Analysis</option>
+                                <option value="anomalies">Anomaly Detection</option>
+                                <option value="correlations">Correlation Analysis</option>
+                                <option value="custom">Custom Question</option>
+                            </select>
+                        </div>
+                        <div id="customQuestionGroup" class="form-group" style="display: none;">
+                            <textarea id="customQuestion" placeholder="Ask a specific question about your data..."></textarea>
+                        </div>
+                        <div class="button-group">
+                            <button id="analyzeBtn" class="primary-btn">Analyze</button>
+                            <button id="generateStoryBtn" class="secondary-btn">Generate Story</button>
+                            <button id="exportAnalysisBtn" class="secondary-btn">Export Analysis</button>
+                        </div>
+                    </div>
+                    <div id="aiResponseArea" class="ai-response-area" style="display: none;">
+                        <div class="response-header">
+                            <h3 id="responseTitle">AI Response</h3>
+                            <div class="response-actions">
+                                <button id="copyResponseBtn" class="icon-btn" title="Copy">📋</button>
+                                <button id="regenerateBtn" class="icon-btn" title="Regenerate">🔄</button>
+                            </div>
+                        </div>
+                        <div id="aiResponse" class="response-content"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Export & Share Section -->
+            <section class="grid-item card export-share-section">
+                <div class="card-header">
+                    <h2>5. Export & Share</h2>
+                </div>
+                <div class="card-content">
+                    <p>Export your processed data, charts, or a full report.</p>
+                    <div class="export-buttons">
+                        <button id="exportCsvBtn">Export CSV</button>
+                        <button id="exportJsonBtn">Export JSON</button>
+                        <button id="exportExcelBtn">Export Excel</button>
+                        <button id="exportPngBtn">Export PNG</button>
+                        <button id="exportSvgBtn">Export SVG</button>
+                        <button id="exportPdfBtn">Export PDF</button>
+                        <button id="exportReportBtn" class="primary-btn">Generate Full Report</button>
+                        <button id="shareReportBtn" class="secondary-btn">Share Report</button>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Settings</h2>
+                <button id="closeSettingsModal" class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="apiKeyInput">Gemini API Key:</label>
+                    <input type="password" id="apiKeyInput" placeholder="Enter your API key">
+                    <button id="testApiBtn">Test Key</button>
+                </div>
+                <hr>
+                <h3>General</h3>
+                <div class="form-group">
+                    <input type="checkbox" id="settingAutoProcess">
+                    <label for="settingAutoProcess">Automatically process data on upload</label>
+                </div>
+                <div class="form-group">
+                    <input type="checkbox" id="settingValidateData">
+                    <label for="settingValidateData">Automatically validate data quality</label>
+                </div>
+                <div class="form-group">
+                    <input type="checkbox" id="settingNotifications">
+                    <label for="settingNotifications">Show notifications</label>
+                </div>
+                <h3>Appearance</h3>
+                <div class="form-group">
+                    <input type="checkbox" id="settingAnimateCharts">
+                    <label for="settingAnimateCharts">Animate charts</label>
+                </div>
+                <div class="form-group">
+                    <input type="checkbox" id="settingHighContrast">
+                    <label for="settingHighContrast">High contrast mode</label>
+                </div>
+                <div class="form-group">
+                    <input type="checkbox" id="settingCompactMode">
+                    <label for="settingCompactMode">Compact mode</label>
+                </div>
+                <h3>AI & Analysis</h3>
+                <div class="form-group">
+                    <input type="checkbox" id="settingAutoAnalyze">
+                    <label for="settingAutoAnalyze">Automatically run initial analysis after processing</label>
+                </div>
+                <div class="form-group">
+                    <label for="settingMaxTokens">Max Tokens for AI Response:</label>
+                    <select id="settingMaxTokens">
+                        <option value="1000">1000</option>
+                        <option value="2000">2000</option>
+                        <option value="4000">4000</option>
+                        <option value="8000">8000</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="resetSettingsBtn" class="secondary-btn">Reset to Default</button>
+                <button id="saveSettingsBtn" class="primary-btn">Save Settings</button>
             </div>
         </div>
     </div>
+
+    <!-- Help Modal -->
+    <div id="helpModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Help & Documentation</h2>
+                <button id="closeHelpModal" class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="help-tabs">
+                    <button class="help-tab active" data-tab="quickstart">Quick Start</button>
+                    <button class="help-tab" data-tab="features">Features</button>
+                    <button class="help-tab" data-tab="faq">FAQ</button>
+                    <button class="help-tab" data-tab="api">API Usage</button>
+                </div>
+                <div id="quickstartTab" class="help-content active">
+                    <h3>Quick Start Guide</h3>
+                    <p>1. <strong>Input Data:</strong> Drag & drop a file or paste data into the text area.</p>
+                    <p>2. <strong>Process:</strong> Click "Process Data" to parse and validate it.</p>
+                    <p>3. <strong>Visualize:</strong> Select chart type and axes, then click "Update Chart".</p>
+                    <p>4. <strong>Analyze:</strong> Choose an analysis type and click "Analyze" for AI insights.</p>
+                    <p>5. <strong>Export:</strong> Use the export buttons to save your work.</p>
+                </div>
+                <div id="featuresTab" class="help-content">
+                    <h3>Features Overview</h3>
+                    <p>Details about all the cool features...</p>
+                </div>
+                <div id="faqTab" class="help-content">
+                    <h3>Frequently Asked Questions</h3>
+                    <p>Answers to common questions...</p>
+                </div>
+                <div id="apiTab" class="help-content">
+                    <h3>API Usage</h3>
+                    <p>Instructions on how to get and use your Gemini API key...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Modal -->
+    <div id="progressModal" class="modal">
+        <div class="modal-content">
+            <h3 id="progressTitle">Processing...</h3>
+            <p id="progressMessage">Please wait while we analyze your data.</p>
+            <div class="progress-bar">
+                <div id="progressFill" class="progress-fill"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js?v=2"></script>
 </body>
 </html>

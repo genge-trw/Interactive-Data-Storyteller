@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const dataWorker = new Worker('dataProcessor.js');
 
     // TODO: Replace with your actual Gemini API Key
-    const GEMINI_API_KEY = 'AIzaSyBxMyl4vkmV3MUoAc_sOrhdB9aI3AMe9DM'; 
+    const GEMINI_API_KEY = 'YOU_GEMINI_API_KEY'; 
     const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=';
 
     // --- Helpers ---

@@ -156,47 +156,7 @@ button:active {
     margin-left: 10px;
 }
 
-.data-chart {
-    display: flex;
-    align-items: flex-end;
-    height: 200px;
-    border-bottom: 1px solid var(--border-color);
-    padding-top: 20px;
-    margin-top: 20px;
-    overflow-x: auto;
-    gap: 5px;
-}
 
-.bar-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-end;
-    height: 100%;
-    min-width: 30px; /* Ensure bars are visible even with many data points */
-}
-
-.bar {
-    width: 80%;
-    background-color: var(--primary-color);
-    transition: height 0.3s ease;
-    position: relative;
-}
-
-.bar-value {
-    position: absolute;
-    top: -20px;
-    font-size: 0.8em;
-    color: var(--text-color);
-}
-
-.bar-label {
-    font-size: 0.7em;
-    color: var(--light-text-color);
-    margin-top: 5px;
-    text-align: center;
-    word-break: break-all;
-}
 
 .chart-controls {
     display: flex;
@@ -306,7 +266,7 @@ button:active {
     height: 100%;
     font-size: 0; /* Hide text content */
     line-height: 0; /* Hide text content */
-    z-index: -1; /* Place behind the label */
+    /* z-index: -1; */ /* Removed due to potential click issues */
 }
 
 /* General button styles (if not already defined) */

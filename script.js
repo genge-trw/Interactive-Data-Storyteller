@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const dataWorker = new Worker('dataProcessor.js');
 
     // TODO: Replace with your actual Gemini API Key
-    const GEMINI_API_KEY = 'YOUR_GEMINI_API_KEY'; 
+    const GEMINI_API_KEY = 'AIzaSyBxMyl4vkmV3MUoAc_sOrhdB9aI3AMe9DM'; 
     const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=';
 
     // --- Helpers ---
@@ -66,10 +66,6 @@ document.addEventListener('DOMContentLoaded', () => {
         aiChatHistory.appendChild(messageElement);
         aiChatHistory.scrollTop = aiChatHistory.scrollHeight; // Scroll to bottom
     }
-
-    // --- CSV Parser (PapaParse) ---
-    // This function is now handled by the Web Worker (dataProcessor.js)
-    // function parseCSV(text) { ... } // Removed
 
     // Handle messages from the Web Worker
     dataWorker.onmessage = async function(e) {
@@ -138,7 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }, 1500); // Simulate AI processing time
             }
         } else if (status === 'error') {
-            alert(message);
+            alert(`Web Worker Error: ${message}\nDetails: ${JSON.stringify(errors || error)}`);
             console.error('Web Worker Error:', errors || error);
             hideLoading(summaryLoading);
         }
@@ -148,7 +144,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderDataTable(data) {
         if (!data || !data.headers || !data.data || data.data.length === 0) {
             dataPreviewSection.style.display = 'none';
-            dataChart.innerHTML = '<p class="chart-placeholder">Select data and chart type to visualize.</p>'; // Placeholder for empty chart
+            dataChart.style.display = 'none'; // Hide the canvas
+            chartPlaceholder.style.display = 'block'; // Show the placeholder
+            chartPlaceholder.textContent = 'Select data and chart type to visualize.'; // Set placeholder text
             return;
         }
         let tableHTML = '<table><thead><tr>';
@@ -177,8 +175,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (headers.length > 1) chartValueSelect.value = headers[1]; else if (headers.length > 0) chartValueSelect.value = headers[0];
     }
 
+    // Helper to check if a string is date-like (YYYY-MM or YYYY-MM-DD)
+    function isDateLike(value) {
+        if (typeof value !== 'string') return false;
+        return /^\d{4}-\d{2}(-\d{2})?$/.test(value);
+    }
+
     // --- Charts (using Chart.js) ---
-    function updateChart(data, categoryKey, valueKey, chartType) {
+    function updateChart(data, categoryKey, valueKey, chartType, chartTitle = '', chartColor = '#4285F4', showLegend = true) {
         const ctx = dataChart.getContext('2d');
 
         if (chartInstance) {
@@ -239,7 +243,16 @@ document.addEventListener('DOMContentLoaded', () => {
                         display: chartType !== 'pie' // Hide y-axis for pie charts
                     },
                     x: {
-                        display: chartType !== 'pie' // Hide x-axis for pie charts
+                        display: chartType !== 'pie', // Hide x-axis for pie charts
+                        type: isDateLike(data.data[0]?.[categoryKey]) && chartType === 'line' ? 'time' : 'category',
+                        time: {
+                            unit: 'month', // Default to month, can be adjusted
+                            tooltipFormat: 'MMM YYYY'
+                        },
+                        title: {
+                            display: true,
+                            text: categoryKey
+                        }
                     }
                 }
             }
@@ -307,6 +320,16 @@ document.addEventListener('DOMContentLoaded', () => {
         dataWorker.postMessage({ dataToProcess });
     });
 
+    fileInput.addEventListener('change', async (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            const fileContent = await file.text();
+            dataInput.value = fileContent;
+            // Optionally, trigger processDataBtn.click() here if auto-processing is desired
+            // processDataBtn.click();
+        }
+    });
+
     renderChartBtn.addEventListener('click', () => {
         if (parsedData.data && parsedData.data.length > 0) {
             const cat = chartCategorySelect.value;
@@ -320,10 +343,6 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Please process data first to render a chart.');
         }
     });
-
-    // --- Charts (using Chart.js) ---
-    function updateChart(data, categoryKey, valueKey, chartType, chartTitle = '', chartColor = '#4285F4', showLegend = true) {
-        const ctx = dataChart.getContext('2d');
 
     sendResponseBtn.addEventListener('click', async () => {
         const response = userResponse.value.trim();
@@ -347,7 +366,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (geminiResponse) {
                     appendMessageToChatHistory('AI', geminiResponse); // Add AI response to chat history
                     promptStage = 2;
-                } else {
+                }
+                else {
                     // Fallback to mock AI
                     const mockResponse = 'AI: Who is your target audience and what tone should the narrative have? (e.g., Executives, formal; General public, engaging)';
                     appendMessageToChatHistory('AI', mockResponse); // Add mock AI response to chat history
@@ -402,7 +422,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (geminiResponse) {
             appendMessageToChatHistory('AI', geminiResponse);
-        } else {
+        }
+        else {
             appendMessageToChatHistory('AI', 'Sorry, I could not process your request at this time. Please check your API key or try again later.');
         }
         hideLoading(promptLoading);
@@ -449,22 +470,15 @@ document.addEventListener('DOMContentLoaded', () => {
         showLoading(narrativeLoading);
         narrativeOutput.querySelector('p').innerHTML = ''; // Clear previous narrative
 
-        let prompt = `Generate a data narrative based on the following:
-`;
-        prompt += `Storytelling Goal: ${storytellingGoal}
-`;
-        prompt += `Target Audience & Tone: ${audienceTone}
-`;
-        prompt += `Key Emphasis Points: ${emphasisPoints}
-`;
-        prompt += `Data Summary: ${currentSummary}
-`;
-        prompt += `Raw Data (first 500 chars): ${currentData.substring(0, 500)}...
-`;
+        let prompt = `Generate a data narrative based on the following:\n`;
+        prompt += `Storytelling Goal: ${storytellingGoal}\n`;
+        prompt += `Target Audience & Tone: ${audienceTone}\n`;
+        prompt += `Key Emphasis Points: ${emphasisPoints}\n`;
+        prompt += `Data Summary: ${currentSummary}\n`;
+        prompt += `Raw Data (first 500 chars): ${currentData.substring(0, 500)}...\n`;
 
         if (rewriteInstruction) {
-            prompt += `Rewrite the previous narrative with the following instruction: "${rewriteInstruction}". Previous narrative: "${currentNarrative}"
-`;
+            prompt += `Rewrite the previous narrative with the following instruction: "${rewriteInstruction}". Previous narrative: "${currentNarrative}"\n`;
         } else {
             prompt += `Please provide a compelling narrative.`;
         }
@@ -474,26 +488,18 @@ document.addEventListener('DOMContentLoaded', () => {
         if (geminiNarrative) {
             currentNarrative = geminiNarrative;
             narrativeOutput.querySelector('p').innerHTML = currentNarrative;
-        } else {
+        }
+        else {
             // Fallback to mock narrative if API call fails
-            let narrative = `<h2>Data Story: ${storytellingGoal}</h2>
-
-`;
-            narrative += `<p><strong>Target Audience:</strong> ${audienceTone}</p>
-`;
-            narrative += `<p><strong>Key Emphasis:</strong> ${emphasisPoints}</p>
-
-`;
-            narrative += `<p>This is a mock narrative generated based on your inputs and the provided data.</p>
-`;
-            narrative += `<p>The data shows various trends and patterns. For example, in the '${parsedData.headers[0]}' category, there's a notable ${Math.random() > 0.5 ? 'increase' : 'decrease'} in '${parsedData.headers[1]}' values over time.</p>
-`;
-            narrative += `<p>Further analysis would delve into specific data points like ${parsedData.data[0][parsedData.headers[0]]} having a value of ${parsedData.data[0][parsedData.headers[1]]}.</p>
-`;
+            let narrative = `<h2>Data Story: ${storytellingGoal}</h2>\n\n`;
+            narrative += `<p><strong>Target Audience:</strong> ${audienceTone}</p>\n`;
+            narrative += `<p><strong>Key Emphasis:</strong> ${emphasisPoints}</p>\n\n`;
+            narrative += `<p>This is a mock narrative generated based on your inputs and the provided data.</p>\n`;
+            narrative += `<p>The data shows various trends and patterns. For example, in the '${parsedData.headers[0]}' category, there's a notable ${Math.random() > 0.5 ? 'increase' : 'decrease'} in '${parsedData.headers[1]}' values over time.</p>\n`;
+            narrative += `<p>Further analysis would delve into specific data points like ${parsedData.data[0][parsedData.headers[0]]} having a value of ${parsedData.data[0][parsedData.headers[1]]}.</p>\n`;
 
             if (rewriteInstruction) {
-                narrative += `<p><em>(Rewritten with instruction: "${rewriteInstruction}")</em></p>
-`;
+                narrative += `<p><em>(Rewritten with instruction: "${rewriteInstruction}")</em></p>\n`;
             }
             currentNarrative = narrative;
             narrativeOutput.querySelector('p').innerHTML = currentNarrative;
@@ -576,7 +582,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const narratives = JSON.parse(localStorage.getItem('savedNarratives') || '[]');
         if (narratives.length === 0) {
             savedNarrativesList.innerHTML = '<p class="empty-state">No narratives saved yet.</p>';
-        } else {
+        }
+        else {
             let html = '';
             narratives.forEach((narrative, index) => {
                 html += `
@@ -607,7 +614,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Optionally scroll to narrative output
                 narrativeOutput.scrollIntoView({ behavior: 'smooth' });
             }
-        } else if (event.target.classList.contains('delete-narrative-btn')) {
+        }
+        else if (event.target.classList.contains('delete-narrative-btn')) {
             const index = event.target.dataset.index;
             let narratives = JSON.parse(localStorage.getItem('savedNarratives') || '[]');
             if (confirm('Are you sure you want to delete this narrative?')) {
@@ -621,8 +629,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Basic Unit Tests (In-browser) ---
     function runTests() {
         console.log('--- Running Basic Unit Tests ---');
-
-        
 
         // Test populateChartSelectors
         populateChartSelectors(['col1', 'col2', 'col3']);
@@ -652,7 +658,8 @@ document.addEventListener('DOMContentLoaded', () => {
         console.assert(promptOutput.style.display === 'none', 'clearAll: promptOutput should be hidden');
         console.assert(narrativeOutput.style.display === 'none', 'clearAll: narrativeOutput should be hidden');
         console.assert(dataPreviewTable.innerHTML === '', 'clearAll: dataPreviewTable should be empty');
-        console.assert(dataChart.innerHTML.includes('Select data and chart type') || dataChart.innerHTML.includes('No data available'), 'clearAll: dataChart should have placeholder');
+        console.assert(dataChart.style.display === 'none', 'updateChart: Chart should be hidden with no data');
+        console.assert(chartPlaceholder.textContent.includes('Select data and chart type to visualize.'), 'clearAll: Should show initial chart placeholder message');
         console.assert(chartCategorySelect.options.length === 0, 'clearAll: chartCategorySelect should be empty');
         console.assert(chartValueSelect.options.length === 0, 'clearAll: chartValueSelect should be empty');
         console.assert(chartTypeSelect.value === 'bar', 'clearAll: chartTypeSelect should be bar');
@@ -661,7 +668,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Test updateChart with no data
         updateChart({ headers: [], data: [] }, 'col1', 'col2', 'bar');
         console.assert(dataChart.style.display === 'none', 'updateChart: Chart should be hidden with no data');
-        console.assert(dataChart.innerHTML.includes('No data available to render chart.'), 'updateChart: Should show no data message');
+        console.assert(chartPlaceholder.textContent.includes('No data available to render chart.'), 'updateChart: Should show no data message');
         console.log('updateChart no data tests passed.');
 
         // Test updateChart with non-numerical value column
@@ -671,7 +678,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         updateChart(nonNumericalData, 'category', 'value', 'bar');
         console.assert(dataChart.style.display === 'none', 'updateChart: Chart should be hidden with non-numerical value');
-        console.assert(dataChart.innerHTML.includes('Selected value column contains no numerical data for charting.'), 'updateChart: Should show non-numerical data message');
+        console.assert(chartPlaceholder.textContent.includes('Selected value column contains no numerical data for charting.'), 'updateChart: Should show non-numerical data message');
         console.log('updateChart non-numerical value tests passed.');
 
         // Test updateChart with valid data (visual inspection needed for full verification)

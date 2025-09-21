@@ -103,6 +103,10 @@
                         <h4>Data Quality Report:</h4>
                         <div id="qualityIndicators"></div>
                     </div>
+                    <div id="aiCleaningSuggestions" class="ai-cleaning-suggestions" style="display: none;">
+                        <h4>AI Cleaning Suggestions:</h4>
+                        <div id="cleaningSuggestionsList"></div>
+                    </div>
                     <div class="table-container">
                         <p id="noDataMessage">No data loaded yet.</p>
                         <table id="dataPreviewTable" class="data-table" style="display: none;">
@@ -177,6 +181,17 @@
                                 <option value="anomalies">Anomaly Detection</option>
                                 <option value="correlations">Correlation Analysis</option>
                                 <option value="custom">Custom Question</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="toneOfVoiceSelect">Tone of Voice:</label>
+                            <select id="toneOfVoiceSelect">
+                                <option value="neutral">Neutral</option>
+                                <option value="formal">Formal</option>
+                                <option value="casual">Casual</option>
+                                <option value="creative">Creative</option>
+                                <option value="data analyst">Data Analyst</option>
+                                <option value="storyteller">Storyteller</option>
                             </select>
                         </div>
                         <div id="customQuestionGroup" class="form-group" style="display: none;">
@@ -334,6 +349,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=2"></script>
+    <script type="module" src="app.js?v=2"></script>
 </body>
 </html>

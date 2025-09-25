@@ -2,13 +2,88 @@
 // Handles all data loading, parsing, validation, and transformation logic
 
 import { elements } from './domElements.js';
-import { showNotification, showLoadingOverlay, hideLoadingOverlay, isDateLike, percentile } from './utils.js';
+import { showNotification, showLoadingOverlay, hideLoadingOverlay, isDateLike, percentile, readFileAsBinaryString } from './utils.js';
 import { appSettings } from './settingsManager.js';
 import { setParsedData } from './aiService.js';
 import { setParsedDataForCharts, updateChart } from './chartManager.js';
+import { currentChart } from './chartManager.js'; // Import currentChart to reset it
 
 let parsedData = null;
 const dataWorker = new Worker('dataProcessor.js');
+
+export function resetDataState() {
+    parsedData = null;
+    // Reset UI elements related to data
+    elements.dataTextarea.value = '';
+    elements.rowCountSpan.textContent = '0';
+    elements.columnCountSpan.textContent = '0';
+    elements.numericColumnsSpan.textContent = '0';
+    elements.missingValuesSpan.textContent = '0';
+    elements.qualityIndicatorsDiv.innerHTML = '';
+    elements.dataQualityDiv.style.display = 'none';
+    elements.aiCleaningSuggestions.style.display = 'none';
+    elements.cleaningSuggestionsList.innerHTML = '';
+    elements.dataPreviewTable.style.display = 'none';
+    elements.noDataMessage.style.display = 'block';
+    elements.tableHead.innerHTML = '';
+    elements.tableBody.innerHTML = '';
+    elements.xAxisSelect.innerHTML = '';
+    elements.yAxisSelect.innerHTML = '';
+    elements.chartTitleInput.value = '';
+    if (currentChart) {
+        currentChart.destroy();
+    }
+    elements.mainChartCanvas.style.display = 'none';
+    elements.chartPlaceholder.style.display = 'block';
+    elements.aiResponseArea.style.display = 'none';
+    elements.aiResponseContent.innerHTML = '';
+    elements.apiStatusIndicator.classList.remove('status-connected', 'status-disconnected');
+    elements.apiStatusIndicator.classList.add('status-disconnected');
+    elements.apiStatusText.textContent = 'API Not Connected';
+    showNotification('Application state reset.', 'info');
+}
+
+export async function handleFileUpload(file, event) {
+    if (event) event.preventDefault();
+    elements.dropZone.classList.remove('drag-over');
+
+    if (!file) {
+        showNotification('No file selected or dropped.', 'warning');
+        return;
+    }
+
+    // Check file type (basic)
+    if (file.type.match('text/csv') || file.type.match('text/plain') || file.name.endsWith('.csv') || file.name.endsWith('.txt') || file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+        if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+            showNotification('Excel file detected. Processing...', 'info');
+            showLoadingOverlay('Processing Excel', 'Converting Excel to CSV format...');
+            try {
+                const data = await readFileAsBinaryString(file);
+                const workbook = XLSX.read(data, { type: 'binary' });
+                const sheetName = workbook.SheetNames[0];
+                const csv = XLSX.utils.sheet_to_csv(workbook.Sheets[sheetName]);
+                elements.dataTextarea.value = csv;
+                showNotification('Excel file converted to CSV in textarea.', 'success');
+            } catch (excelError) {
+                showNotification(`Error processing Excel file: ${excelError.message}`, 'error');
+                console.error('Excel processing error:', excelError);
+            } finally {
+                hideLoadingOverlay();
+            }
+        } else {
+            const fileContent = await file.text();
+            elements.dataTextarea.value = fileContent;
+            showNotification('File loaded into textarea.', 'success');
+        }
+
+        if (appSettings.autoProcess) {
+            processData();
+        }
+    } else {
+        showNotification('Unsupported file type. Please upload CSV, Excel, or plain text.', 'error');
+    }
+}
+
 
 dataWorker.onmessage = async function(e) {
     const { status, parsedData: workerParsedData, message, errors, error } = e.data;
@@ -26,6 +101,7 @@ dataWorker.onmessage = async function(e) {
         if (appSettings.validateData) {
             const validationReport = validateData(parsedData);
             displayValidationReport(validationReport);
+            highlightTableInsights(validationReport); // Highlight table cells based on validation
             if (validationReport.issues.length > 0) {
                 suggestDataTransformations(validationReport);
             }
@@ -170,6 +246,7 @@ export function applyTransformation(transformationType, column, value) {
         if (appSettings.validateData) {
             const validationReport = validateData(parsedData);
             displayValidationReport(validationReport);
+            highlightTableInsights(validationReport); // Re-highlight table after transformation
             // No need to suggest again immediately after applying
         }
     } else {
@@ -333,11 +410,58 @@ export function renderDataTable(data) {
     headerRow += '</tr>';
     elements.tableHead.innerHTML = headerRow;
 
-    data.data.slice(0, 100).forEach(row => { // Display first 100 rows for preview
+    data.data.slice(0, 100).forEach((row, rowIndex) => { // Display first 100 rows for preview
         let bodyRow = '<tr>';
-        data.headers.forEach(h => bodyRow += `<td>${row[h] || ''}</td>`);
+        data.headers.forEach(h => bodyRow += `<td data-column="${h}" data-row-index="${rowIndex}">${row[h] || ''}</td>`);
         bodyRow += '</tr>';
         elements.tableBody.innerHTML += bodyRow;
+    });
+}
+
+/**
+ * Highlights cells in the data table based on validation issues.
+ * @param {object} validationReport The report from validateData.
+ */
+function highlightTableInsights(validationReport) {
+    // Clear previous highlights
+    elements.tableBody.querySelectorAll('td').forEach(td => {
+        td.classList.remove('table-highlight-missing', 'table-highlight-inconsistent', 'table-highlight-outlier');
+    });
+
+    if (!validationReport || validationReport.issues.length === 0) {
+        return;
+    }
+
+    validationReport.issues.forEach(issue => {
+        if (issue.type === 'missing_values' && issue.details && issue.details.missingRows) {
+            issue.details.missingRows.forEach(rowNum => {
+                // rowNum is 1-based, data-row-index is 0-based
+                const rowIndex = rowNum - 1;
+                const cell = elements.tableBody.querySelector(`td[data-column="${issue.column}"][data-row-index="${rowIndex}"]`);
+                if (cell) {
+                    cell.classList.add('table-highlight-missing');
+                }
+            });
+        } else if (issue.type === 'inconsistent_type' && issue.column) {
+            // For inconsistent types, we highlight all cells in the column that are not numeric
+            // This requires re-checking the actual cell content, as the report only stores samples
+            elements.tableBody.querySelectorAll(`td[data-column="${issue.column}"]`).forEach(cell => {
+                const cellValue = cell.textContent;
+                if (isNaN(parseFloat(cellValue)) && cellValue.trim() !== '') {
+                    cell.classList.add('table-highlight-inconsistent');
+                }
+            });
+        } else if (issue.type === 'outliers' && issue.column && issue.details) {
+            const lowerBound = issue.details.lowerBound;
+            const upperBound = issue.details.upperBound;
+
+            elements.tableBody.querySelectorAll(`td[data-column="${issue.column}"]`).forEach(cell => {
+                const cellValue = parseFloat(cell.textContent);
+                if (!isNaN(cellValue) && (cellValue < lowerBound || cellValue > upperBound)) {
+                    cell.classList.add('table-highlight-outlier');
+                }
+            });
+        }
     });
 }
 

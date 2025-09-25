@@ -43,6 +43,7 @@ export const elements = {
     mainChartCanvas: document.getElementById('mainChart'),
     heatmapContainer: document.getElementById('heatmapContainer'),
     chartPlaceholder: document.getElementById('chartPlaceholder'),
+    chartPromptContainer: document.getElementById('chartPromptContainer'),
 
     apiStatusIndicator: document.querySelector('#apiStatus .status-indicator'),
     apiStatusText: document.querySelector('#apiStatus .status-text'),

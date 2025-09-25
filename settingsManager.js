@@ -86,9 +86,12 @@ export function applyTheme(themeName) {
 
 export function getDefaultSettings() {
     return {
-        // WARNING: Storing API keys directly in client-side localStorage is not recommended for production applications.
-        // For a more secure solution, consider using a backend proxy to handle API calls.
-        geminiApiKey: 'AIzaSyBxMyl4vkmV3MUoAc_sOrhdB9aI3AMe9DM',
+        // IMPORTANT: Storing API keys directly in client-side localStorage is NOT recommended for production applications.
+        // For a secure solution, you MUST implement a backend proxy to handle API calls,
+        // where the API key is stored securely on the server and never exposed to the client.
+        // The 'geminiApiKey' setting here is primarily for local development/testing without a proxy.
+        geminiApiKey: '', // Should ideally be empty and handled by a backend proxy in production
+        geminiModel: 'gemini-pro', // Default Gemini model
         theme: 'light',
         autoProcess: false,
         validateData: true,

@@ -10,14 +10,6 @@ const API_PROXY_ENDPOINT = '/api/gemini'; // Local proxy endpoint for Gemini API
 export async function callGeminiAPI(promptContent, persona = 'neutral') {
     // In a production environment, the API key should be handled server-side
     // via a proxy to prevent exposure. This client-side check is for development.
-    if (!appSettings.geminiApiKey || appSettings.geminiApiKey === 'YOUR_GEMINI_API_KEY') {
-        showNotification('Gemini API Key is not configured or is using a placeholder. For secure and functional AI features, please configure a backend proxy or set a valid key for development purposes.', 'error', 8000);
-        elements.apiStatusIndicator.classList.remove('status-connected');
-        elements.apiStatusIndicator.classList.add('status-disconnected');
-        elements.apiStatusText.textContent = 'API Not Connected (Proxy Needed)';
-        return null;
-    }
-
     elements.apiStatusIndicator.classList.remove('status-disconnected');
     elements.apiStatusIndicator.classList.add('status-connected');
     elements.apiStatusText.textContent = 'API Connected (via Proxy)';
@@ -29,9 +21,7 @@ export async function callGeminiAPI(promptContent, persona = 'neutral') {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                // Pass the API key via a custom header for the proxy to pick up
-                // This is still client-side, so a proper backend proxy is crucial.
-                'X-Gemini-Api-Key': appSettings.geminiApiKey 
+                 
             },
             body: JSON.stringify({
                 model: appSettings.geminiModel || 'gemini-pro', // Allow model selection from settings
@@ -67,6 +57,40 @@ export async function callGeminiAPI(promptContent, persona = 'neutral') {
         elements.apiStatusIndicator.classList.remove('status-connected');
         elements.apiStatusIndicator.classList.add('status-disconnected');
         elements.apiStatusText.textContent = 'API Error';
+        hideLoadingOverlay();
+        return null;
+    }
+}
+
+const SENTIMENT_API_ENDPOINT = window.APP_CONFIG?.SENTIMENT_API_ENDPOINT || 'http://localhost:5000/analyze_sentiment';
+
+export async function callSentimentAPI(textInput) {
+    showLoadingOverlay('Analyzing Sentiment', 'Processing text...');
+
+    try {
+        const response = await fetch(SENTIMENT_API_ENDPOINT, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ text: textInput })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('Sentiment API error:', errorData);
+            showNotification(`Sentiment API Error: ${errorData.error.message || 'Unknown sentiment API error'}`, 'error', 5000);
+            hideLoadingOverlay();
+            return null;
+        }
+
+        const data = await response.json();
+        hideLoadingOverlay();
+        return data.sentiments;
+
+    } catch (error) {
+        console.error('Error calling Sentiment API:', error);
+        showNotification(`Error calling Sentiment API: ${error.message || 'An unexpected error occurred.'}`, 'error', 5000);
         hideLoadingOverlay();
         return null;
     }

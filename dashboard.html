@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Model Dashboard</title>
+    <script src="https://unpkg.com/react/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        import React, { useState } from "react";
+
+        const App = () => {
+          const [modelData, setModelData] = useState([]);
+          const [trainingProgress, setTrainingProgress] = useState(0);
+
+          const handleTraining = () => {
+            setTrainingProgress(trainingProgress + 10);
+          };
+
+          return (
+            <div>
+              <h2>Model Dashboard</h2>
+              <p>Training Progress: {trainingProgress}%</p>
+              <button onClick={handleTraining}>Start Training</button>
+              <table>
+                {modelData.map((model, index) => (
+                  <tr key={index}>
+                    <td>{model.name}</td>
+                    <td>{model.status}</td>
+                  </tr>
+                ))}
+              </table>
+            </div>
+          );
+        };
+
+        ReactDOM.render(<App />, document.getElementById("root"));
+    </script>
+</body>
+</html>

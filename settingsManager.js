@@ -90,7 +90,7 @@ export function getDefaultSettings() {
         // For a secure solution, you MUST implement a backend proxy to handle API calls,
         // where the API key is stored securely on the server and never exposed to the client.
         // The 'geminiApiKey' setting here is primarily for local development/testing without a proxy.
-        geminiApiKey: '', // Should ideally be empty and handled by a backend proxy in production
+        
         geminiModel: 'gemini-pro', // Default Gemini model
         theme: 'light',
         autoProcess: false,
@@ -109,7 +109,7 @@ export function loadSettings() {
     appSettings = { ...getDefaultSettings(), ...savedSettings };
 
     // Apply settings to UI elements
-    elements.apiKeyInput.value = appSettings.geminiApiKey || '';
+    
     elements.themeSelect.value = appSettings.theme;
     elements.settingAutoProcessCheckbox.checked = appSettings.autoProcess;
     elements.settingValidateDataCheckbox.checked = appSettings.validateData;
@@ -124,7 +124,7 @@ export function loadSettings() {
 }
 
 export function saveSettings() {
-    appSettings.geminiApiKey = elements.apiKeyInput.value.trim();
+    
     appSettings.theme = elements.themeSelect.value;
     appSettings.autoProcess = elements.settingAutoProcessCheckbox.checked;
     appSettings.validateData = elements.settingValidateDataCheckbox.checked;

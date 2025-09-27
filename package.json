@@ -1,14 +1,28 @@
 {
-  "name": "interactive-data-storyteller-proxy",
+  "name": "interactive-data-storyteller",
   "version": "1.0.0",
-  "main": "server.js",
-  "type": "module",
+  "description": "A web application designed to help users transform raw data into compelling narratives with the assistance of AI.",
+  "main": "app.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "python3 -m http.server 8000",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "keywords": [
+    "data",
+    "storytelling",
+    "AI",
+    "Gemini",
+    "visualization",
+    "web-app"
+  ],
+  "author": "Your Name/Organization",
+  "license": "MIT",
   "dependencies": {
-    "dotenv": "^16.4.0",
-    "express": "^4.19.0",
-    "node-fetch": "^3.3.2"
+    "papaparse": "5.4.1",
+    "html2canvas": "1.4.1",
+    "chart.js": "4.4.0",
+    "dayjs": "1.11.10",
+    "chartjs-adapter-dayjs-4": "1.0.0",
+    "xlsx": "0.18.5"
   }
 }

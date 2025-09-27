@@ -9,17 +9,19 @@ To ensure your application is robust and performs as expected, consider the foll
         *   Upload a valid `.csv` file.
         *   Upload a valid `.txt` file.
         *   Try with empty input.
-    *   **AI Interaction:**
+    *   **AI Interaction:** (Note: AI functionality is currently mocked)
         *   Follow the full prompting flow (Goal -> Audience/Tone -> Emphasis).
         *   Try different "Predefined Goals."
         *   Test the "Rewrite Narrative" with various instructions (e.g., "make it shorter," "more formal," "add humor").
     *   **Chart Visualization:**
         *   Process data with at least two columns (one categorical, one numerical).
         *   Select different category and value columns.
-        *   Switch between "Bar Chart" and "Line Chart."
+        *   Switch between "Bar Chart", "Line Chart", and "Pie Chart."
         *   Test with data that has zero values, negative values (if applicable), or very large/small values.
         *   Test with data where the selected "value" column is not numerical.
-    *   **Saving & Loading:**
+    *   **Export Chart:**
+        *   Download a generated chart as a PNG image and verify the output.
+    *   **Saving & Loading:****
         *   Generate a narrative and verify it appears in "Saved Narratives."
         *   "View" a saved narrative.
         *   "Delete" a saved narrative and confirm it's removed.
@@ -34,9 +36,9 @@ To ensure your application is robust and performs as expected, consider the foll
     *   **Malformed CSV:** Paste CSV with uneven rows, missing headers, or extra commas.
     *   **Non-Numerical Data for Charts:** Select a text column as the "Value" for a chart.
     *   **Very Large Data:** Test with a CSV file containing hundreds or thousands of rows to check performance.
-    *   **AI API Errors:** (If you have the Chrome flags enabled) Simulate network issues or unexpected AI responses (this might require dev tools manipulation or a custom mock layer).
+    *   **AI API Errors:** (If using Gemini API) Simulate network issues or unexpected API responses (this might require dev tools manipulation or a custom mock layer). Ensure your API key is correctly configured.
 
-3.  **Browser & Device Compatibility:**
+3.  **Browser & Device Compatibility:****
     *   Test on different browsers (Chrome, Firefox, Edge, Safari) to ensure consistent behavior (note: Chrome Built-in AI APIs are Chrome-specific).
     *   Test on various screen sizes (desktop, tablet, mobile) to check responsiveness.
 
